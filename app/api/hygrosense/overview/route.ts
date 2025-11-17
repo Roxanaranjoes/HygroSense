@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import openai from "@/lib/openai";
 import { getArduinoAccessToken } from "@/lib/arduino";
 
-const { ARDUINO_API_BASE_URL, ARDUINO_THING_ID, ARDUINO_PROPERTY_ID } =
+const {
+  ARDUINO_API_BASE_URL,
+  ARDUINO_THING_ID,
+  ARDUINO_PROPERTY_ID,
+  ARDUINO_TEMPERATURE_PROPERTY_ID,
+} =
   process.env;
 
 function ensureEnv(value: string | undefined, name: string) {
@@ -14,9 +19,16 @@ function ensureEnv(value: string | undefined, name: string) {
 
 const baseUrl = ensureEnv(ARDUINO_API_BASE_URL, "ARDUINO_API_BASE_URL");
 const thingId = ensureEnv(ARDUINO_THING_ID, "ARDUINO_THING_ID");
-const propertyId = ensureEnv(ARDUINO_PROPERTY_ID, "ARDUINO_PROPERTY_ID");
+const humidityPropertyId = ensureEnv(
+  ARDUINO_PROPERTY_ID,
+  "ARDUINO_PROPERTY_ID"
+);
+const temperaturePropertyId = ensureEnv(
+  ARDUINO_TEMPERATURE_PROPERTY_ID,
+  "ARDUINO_TEMPERATURE_PROPERTY_ID"
+);
 
-async function fetchArduinoHumidity() {
+async function fetchArduinoPropertyValue(propertyId: string) {
   const url = `${baseUrl}/things/${thingId}/properties/${propertyId}`;
 
   const performRequest = async (forceRefresh = false) => {
@@ -44,17 +56,17 @@ async function fetchArduinoHumidity() {
   const value = Number(payload?.last_value);
 
   if (!Number.isFinite(value)) {
-    throw new Error("Invalid humidity value from Arduino Cloud");
+    throw new Error("Invalid property value from Arduino Cloud");
   }
 
   return value;
 }
 
-async function buildEpicNarrative(humidity: number) {
+async function buildEpicNarrative(humidity: number, temperature: number) {
   const prompt = [
-    `Lectura actual de HygroSense: ${humidity}% de humedad.`,
-    "Cuenta como se siente el ambiente en maximo tres frases fluidas.",
-    "Incluye hasta tres recomendaciones dentro del mismo texto, sin listas ni numeraciones.",
+    `Lectura actual de HygroSense: ${humidity}% de humedad y ${temperature}°C de temperatura.`,
+    "Cuenta como se siente el ambiente en maximo tres frases fluidas mencionando tanto la humedad como la temperatura.",
+    "Incluye hasta tres recomendaciones dentro del mismo texto, sin listas ni numeraciones, considerando ambas variables.",
     "Escribe en espanol cercano y natural, como un especialista humano que evita tecnicismos o referencias a sistemas automaticos.",
   ].join(" ");
 
@@ -93,10 +105,13 @@ async function buildEpicNarrative(humidity: number) {
 
 export async function GET() {
   try {
-    const humedad = await fetchArduinoHumidity();
-    const textoEpico = await buildEpicNarrative(humedad);
+    const [humedad, temperatura] = await Promise.all([
+      fetchArduinoPropertyValue(humidityPropertyId),
+      fetchArduinoPropertyValue(temperaturePropertyId),
+    ]);
+    const textoEpico = await buildEpicNarrative(humedad, temperatura);
 
-    return NextResponse.json({ humedad, textoEpico });
+    return NextResponse.json({ humedad, temperatura, textoEpico });
   } catch (error) {
     console.error("HygroSense overview error:", error);
     return NextResponse.json(

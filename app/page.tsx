@@ -1,10 +1,18 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 interface HygroSenseResponse {
   humedad: number;
+  temperatura: number;
   textoEpico: string;
   error?: string;
 }
@@ -44,6 +52,12 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const chatRef = useRef<HTMLDivElement | null>(null);
+  const [activeModal, setActiveModal] = useState<
+    "humidity" | "temperature" | "insights" | null
+  >(null);
+  const [insightTab, setInsightTab] = useState<"resumen" | "detalle">(
+    "resumen"
+  );
 
   const fetchOverview = useCallback(async () => {
     try {
@@ -64,8 +78,16 @@ export default function HomePage() {
         throw new Error("Humedad invalida");
       }
 
+      if (
+        typeof json.temperatura !== "number" ||
+        Number.isNaN(json.temperatura)
+      ) {
+        throw new Error("Temperatura invalida");
+      }
+
       setData({
         humedad: json.humedad,
+        temperatura: json.temperatura,
         textoEpico: json.textoEpico,
       });
     } catch (err) {
@@ -83,8 +105,11 @@ export default function HomePage() {
   }, [fetchOverview]);
 
   const humidityValue = data?.humedad ?? null;
+  const temperatureValue = data?.temperatura ?? null;
   const humidityDisplay =
     humidityValue === null ? "--" : `${Math.round(humidityValue)}%`;
+  const temperatureDisplay =
+    temperatureValue === null ? "--" : `${Math.round(temperatureValue)}°C`;
   const humidityProgress =
     humidityValue === null
       ? 0
@@ -129,6 +154,44 @@ export default function HomePage() {
     };
   }, [humidityValue]);
 
+  const temperatureReading = useMemo(() => {
+    if (temperatureValue === null) {
+      return {
+        label: "Sin lectura",
+        description: "Aguardando sensor de temperatura.",
+        gradient: "from-sky-200 via-cyan-200 to-emerald-200",
+        advice:
+          "Cuando llegue la primera medicion veras si necesitas ventilar o abrigar.",
+      };
+    }
+
+    if (temperatureValue < 18) {
+      return {
+        label: "Ambiente fresco",
+        description: "El espacio se siente frio y puede bajar el confort.",
+        gradient: "from-sky-300 via-blue-400 to-cyan-400",
+        advice: "Cierra ventanas largas y agrega textiles o calefaccion ligera.",
+      };
+    }
+
+    if (temperatureValue <= 26) {
+      return {
+        label: "Temperatura equilibrada",
+        description:
+          "Perfecta para concentrarse o descansar sin ajustes mayores.",
+        gradient: "from-emerald-200 via-lime-300 to-amber-200",
+        advice: "Mantener ventilacion suave sera suficiente.",
+      };
+    }
+
+    return {
+      label: "Ambiente calido",
+      description: "Puede sentirse pesado o bochornoso durante el dia.",
+      gradient: "from-amber-300 via-orange-400 to-rose-400",
+      advice: "Ventila, usa ventiladores o cortinas livianas para bajar calor.",
+    };
+  }, [temperatureValue]);
+
   const epicParagraphs = useMemo(() => {
     if (!data?.textoEpico) {
       return [];
@@ -143,14 +206,14 @@ export default function HomePage() {
   const highlightStats = useMemo(
     () => [
       {
-        label: "Lectura actual",
+        label: "Humedad actual",
         value: humidityDisplay,
         detail: environmentReading.tagline,
       },
       {
-        label: "Zona sugerida",
-        value: "45% - 55%",
-        detail: "Rango amable para dia a dia.",
+        label: "Temperatura ambiente",
+        value: temperatureDisplay,
+        detail: temperatureReading.description,
       },
       {
         label: "Frecuencia",
@@ -158,36 +221,101 @@ export default function HomePage() {
         detail: "HygroSense vigila el ambiente por ti.",
       },
     ],
-    [environmentReading.tagline, humidityDisplay]
+    [
+      environmentReading.tagline,
+      environmentReading.description,
+      temperatureReading.description,
+      humidityDisplay,
+      temperatureDisplay,
+    ]
   );
 
   const essentials = useMemo(
     () => [
       {
         title: "Sensacion general",
-        description: environmentReading.label,
+        description: `${environmentReading.label} · ${temperatureReading.label}`,
       },
       {
         title: "Idea rapida",
-        description: environmentReading.tagline,
+        description: `${environmentReading.tagline} ${temperatureReading.advice}`,
       },
       {
         title: "Seguimiento",
-        description: "Lecturas constantes para decidir con calma.",
+        description: `Humedad ${humidityDisplay} / Temperatura ${temperatureDisplay}.`,
       },
       {
         title: "Consejos",
         description: "HygroSense comparte tips cortos en cada relato.",
       },
     ],
-    [environmentReading.label, environmentReading.tagline]
+    [
+      environmentReading,
+      temperatureReading,
+      humidityDisplay,
+      temperatureDisplay,
+    ]
   );
+
+  const combinedInsights = useMemo(() => {
+    const fallback = {
+      resumen: [
+        {
+          title: "En espera",
+          text: "Estamos reuniendo la informacion necesaria para darte recomendaciones completas.",
+        },
+        {
+          title: "Movimiento de aire",
+          text: "Apenas lleguen las lecturas veras ideas para ventilar o cerrar espacios.",
+        },
+      ],
+      detalle: [
+        { title: "Humedad", text: environmentReading.description },
+        { title: "Temperatura", text: temperatureReading.description },
+        { title: "Siguiente paso", text: temperatureReading.advice },
+      ],
+    };
+
+    if (humidityValue === null || temperatureValue === null) {
+      return fallback;
+    }
+
+    const comfort = `Humedad de ${humidityDisplay} junto a ${temperatureDisplay} generan ${environmentReading.label.toLowerCase()} y ${temperatureReading.label.toLowerCase()}.`;
+    const airMessage =
+      humidityValue > 60
+        ? "Abre ventanas cortas o usa deshumidificador para liberar el aire pesado."
+        : humidityValue < 40
+        ? "Mantener recipientes con agua o plantas ayudara a subir la humedad."
+        : "Ventilacion cruzada suave bastara para mantener el equilibrio.";
+    const action = `${environmentReading.tagline} ${temperatureReading.advice}`;
+
+    return {
+      resumen: [
+        { title: "Confort general", text: comfort },
+        { title: "Movimiento de aire", text: airMessage },
+      ],
+      detalle: [
+        { title: "Humedad", text: environmentReading.description },
+        { title: "Temperatura", text: temperatureReading.description },
+        { title: "Siguiente paso", text: action.trim() },
+      ],
+    };
+  }, [
+    environmentReading,
+    temperatureReading,
+    humidityValue,
+    temperatureValue,
+    humidityDisplay,
+    temperatureDisplay,
+  ]);
 
   const showInitialLoading = !data && loading;
 
   const scrollToChat = useCallback(() => {
     chatRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
+
+  const closeModal = useCallback(() => setActiveModal(null), []);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#fffbf5,_#defbea_40%,_#daf1ff_70%)] text-slate-900">
@@ -233,13 +361,13 @@ export default function HomePage() {
                   Actualizacion constante
                 </div>
               </div>
-              <div className="grid gap-4 text-sm text-emerald-800 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="relative -mx-3 flex gap-3 overflow-x-auto pb-4 text-sm text-emerald-800 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible lg:grid-cols-3">
                 {highlightStats.map((stat) => (
                   <div
                     key={stat.label}
-                    className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50 to-sky-50 px-4 py-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-200/70"
+                    className="min-w-[12rem] flex-shrink-0 rounded-2xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50 to-sky-50 px-4 py-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-200/70 sm:min-w-0"
                   >
-                    <p className="text-[0.7rem] tracking-[0.4em] text-pink-500">
+                    <p className="text-[0.65rem] tracking-[0.35em] text-pink-500 sm:text-[0.7rem]">
                       {stat.label}
                     </p>
                     <p className="mt-1 text-2xl font-semibold text-emerald-900">
@@ -251,12 +379,51 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
+              <div className="mt-4 rounded-2xl border border-emerald-100 bg-white/80 p-4 shadow-sm">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="text-xs tracking-[0.3em] text-emerald-500">
+                      Panorama actual
+                    </p>
+                    <p className="text-2xl font-semibold text-emerald-900">
+                      {humidityDisplay} · {temperatureDisplay}
+                    </p>
+                    <p className="text-sm text-emerald-600">
+                      {environmentReading.label} · {temperatureReading.label}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveModal("humidity")}
+                      className="rounded-full border border-emerald-200 px-4 py-2 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-50"
+                    >
+                      Humedad
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveModal("temperature")}
+                      className="rounded-full border border-cyan-200 px-4 py-2 text-xs font-semibold text-cyan-600 transition hover:bg-cyan-50"
+                    >
+                      Temperatura
+                    </button>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm text-emerald-700">
+                  {environmentReading.description} {temperatureReading.description}
+                </p>
+              </div>
             </div>
             <div className="hidden rounded-[24px] border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-6 text-emerald-900 shadow-lg shadow-emerald-100/70 lg:flex lg:flex-col lg:justify-between">
-              <div>
+              <div className="space-y-1">
                 <p className="text-xs tracking-[0.4em] text-emerald-500">Panorama</p>
-                <p className="mt-2 text-4xl font-semibold">{humidityDisplay}</p>
-                <p className="mt-1 text-sm text-emerald-600">{environmentReading.label}</p>
+                <p className="text-4xl font-semibold">{humidityDisplay}</p>
+                <p className="text-sm text-emerald-600">{environmentReading.label}</p>
+              </div>
+              <div className="rounded-2xl border border-white/70 bg-white/80 p-4 text-sm text-emerald-700">
+                <p className="font-semibold text-emerald-900">Temperatura</p>
+                <p className="text-2xl font-semibold">{temperatureDisplay}</p>
+                <p className="text-xs text-emerald-500">Actualizada junto a la humedad.</p>
               </div>
               <div className="space-y-3">
                 <div className="flex justify-between text-xs text-emerald-500">
@@ -264,7 +431,10 @@ export default function HomePage() {
                   <span>10 s</span>
                 </div>
                 <div className="h-2.5 w-full rounded-full bg-emerald-100">
-                  <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400" style={{ width: `${humidityProgress}%` }} />
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400"
+                    style={{ width: `${humidityProgress}%` }}
+                  />
                 </div>
                 <p className="text-xs text-emerald-700">{environmentReading.tagline}</p>
               </div>
@@ -329,6 +499,16 @@ export default function HomePage() {
                   >
                     {environmentReading.label}
                   </span>
+                  <div className="flex flex-wrap justify-center gap-2 text-xs text-emerald-600">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1">
+                      <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                      {humidityDisplay}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1">
+                      <span className="h-2 w-2 rounded-full bg-cyan-400" />
+                      {temperatureDisplay}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex flex-1 flex-col gap-6">
@@ -355,25 +535,24 @@ export default function HomePage() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-lime-50 to-white px-4 py-3">
                       <p className="text-xs tracking-[0.4em] text-sky-500">
-                        Sensacion
+                        Sensacion general
                       </p>
                       <p className="mt-1 text-xl font-semibold text-emerald-900">
-                        {environmentReading.label}
+                        {environmentReading.label} · {temperatureReading.label}
                       </p>
                       <p className="mt-1 text-xs text-emerald-600">
-                        {environmentReading.tagline}
+                        {combinedInsights.detalle[0].text}
                       </p>
                     </div>
                     <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-sky-50 via-cyan-50 to-white px-4 py-3">
                       <p className="text-xs tracking-[0.4em] text-cyan-500">
-                        Proximo paso
+                        Movimiento sugerido
                       </p>
                       <p className="mt-1 text-xl font-semibold text-emerald-900">
-                        Ajusta el ambiente
+                        Siguiente paso
                       </p>
                       <p className="mt-1 text-xs text-emerald-600">
-                        Usa la guia para decidir si ventilar, humidificar o solo
-                        descansar.
+                        {combinedInsights.detalle[2].text}
                       </p>
                     </div>
                   </div>
@@ -418,15 +597,176 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
+                <div className="rounded-[26px] border border-emerald-100 bg-white/85 p-5 shadow-inner shadow-emerald-100">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-xs tracking-[0.3em] text-emerald-500">
+                        Insights del dia
+                      </p>
+                      <p className="text-sm text-emerald-700">
+                        Ideas rapidas basadas en humedad y temperatura.
+                      </p>
+                    </div>
+                    <div className="flex gap-2 rounded-full bg-emerald-50 p-1 text-xs font-semibold text-emerald-600">
+                      {(["resumen", "detalle"] as const).map((tab) => (
+                        <button
+                          key={tab}
+                          type="button"
+                          onClick={() => setInsightTab(tab)}
+                          className={`rounded-full px-3 py-1 transition ${
+                            insightTab === tab
+                              ? "bg-emerald-500 text-white"
+                              : "text-emerald-600"
+                          }`}
+                        >
+                          {tab === "resumen" ? "Resumen" : "Detalle"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    {combinedInsights[insightTab].map((insight) => (
+                      <div
+                        key={insight.title}
+                        className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50 to-sky-50 px-4 py-4 text-sm text-emerald-800 shadow-sm"
+                      >
+                        <p className="text-base font-semibold text-emerald-900">
+                          {insight.title}
+                        </p>
+                        <p className="mt-1 text-xs text-emerald-600">
+                          {insight.text}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveModal("insights")}
+                    className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 px-4 py-2 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-50"
+                  >
+                    Ver mas ideas
+                  </button>
+                </div>
               </div>
             </section>
 
-            <div ref={chatRef} className="h-full">
+            <div ref={chatRef} className="h-full lg:sticky lg:top-10">
               <ChatPanel />
             </div>
           </div>
         </section>
       </main>
+
+      <InfoModal
+        open={activeModal === "humidity"}
+        title="Detalle de humedad"
+        accent="from-emerald-400 to-cyan-400"
+        onClose={closeModal}
+      >
+        <ul className="space-y-2 text-sm text-slate-700">
+          <li>
+            <strong>Lectura actual:</strong> {humidityDisplay}
+          </li>
+          <li>{environmentReading.description}</li>
+          <li>{environmentReading.tagline}</li>
+          <li>
+            Temperatura acompaña: <strong>{temperatureDisplay}</strong> (
+            {temperatureReading.label.toLowerCase()}).
+          </li>
+        </ul>
+        <p className="mt-4 text-xs text-slate-500">
+          Ajusta ventanas o humidificadores segun te resulte comodo. Recuerda
+          que pequeños cambios constantes ayudan mas que acciones drasticas.
+        </p>
+      </InfoModal>
+
+      <InfoModal
+        open={activeModal === "temperature"}
+        title="Detalle de temperatura"
+        accent="from-amber-400 via-orange-400 to-rose-400"
+        onClose={closeModal}
+      >
+        <ul className="space-y-2 text-sm text-slate-700">
+          <li>
+            <strong>Lectura actual:</strong> {temperatureDisplay}
+          </li>
+          <li>{temperatureReading.description}</li>
+          <li>{temperatureReading.advice}</li>
+          <li>
+            Humedad relacionada: <strong>{humidityDisplay}</strong> (
+            {environmentReading.label.toLowerCase()}).
+          </li>
+        </ul>
+        <p className="mt-4 text-xs text-slate-500">
+          Aprovecha las corrientes suaves y la luz natural para mantener un
+          clima estable. Si notas excesos, combina ventilacion con telas o
+  materiales ligeros.
+        </p>
+      </InfoModal>
+
+      <InfoModal
+        open={activeModal === "insights"}
+        title="Insights detallados"
+        accent="from-pink-400 via-rose-400 to-amber-400"
+        onClose={closeModal}
+      >
+        <div className="space-y-4 text-sm text-slate-700">
+          {combinedInsights.detalle.map((insight) => (
+            <div key={insight.title}>
+              <p className="font-semibold text-slate-900">{insight.title}</p>
+              <p className="text-slate-600">{insight.text}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-xs text-slate-500">
+          Cambia entre los modos de resumen y detalle dentro del dashboard para
+          recibir nuevas ideas personalizado al ritmo de tus lecturas.
+        </p>
+      </InfoModal>
     </div>
   );
 }
+
+type InfoModalProps = {
+  open: boolean;
+  title: string;
+  accent: string;
+  onClose: () => void;
+  children: ReactNode;
+};
+
+function InfoModal({
+  open,
+  title,
+  accent,
+  onClose,
+  children,
+}: InfoModalProps) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-0 py-0 sm:px-4 sm:py-6">
+      <div className="h-full w-full max-w-lg overflow-y-auto rounded-none border border-white/10 bg-white p-6 shadow-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-3xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className={`h-1 w-16 rounded-full bg-gradient-to-r ${accent}`} />
+            <h3 className="mt-3 text-2xl font-semibold text-slate-900">
+              {title}
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100"
+          >
+            Cerrar
+          </button>
+        </div>
+        <div className="mt-4 text-slate-700">{children}</div>
+      </div>
+    </div>
+  );
+}
+

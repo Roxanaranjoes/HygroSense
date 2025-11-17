@@ -4,11 +4,11 @@ HygroSense is a vibrant humidity dashboard built with Next.js App Router. It pul
 
 ## Features
 
-- **Arduino Cloud OAuth2** – Automatic client-credentials flow with token caching.
-- **Live humidity stats** – Reads your Thing/Property values every 10 seconds.
-- **AI-generated narratives** – OpenAI condenses the reading into motivating advice.
-- **Chat panel** – Preset or custom questions answered in plain Spanish.
-- **Interactive UI** – Pastel gradients, hover animations, and a responsive layout.
+- **Arduino Cloud OAuth2** - Automatic client-credentials flow with token caching.
+- **Live humidity & temperature** - Reads your Thing/Property values every 10 seconds.
+- **AI-generated narratives** - OpenAI condenses the reading into motivating advice.
+- **Chat panel** - Preset or custom questions answered in plain Spanish.
+- **Interactive UI** - Pastel gradients, hover animations, and a responsive layout.
 
 ## Tech Stack
 
@@ -33,6 +33,7 @@ Create a `.env.local` with:
 ARDUINO_API_BASE_URL=https://api2.arduino.cc/iot/v2
 ARDUINO_THING_ID=...
 ARDUINO_PROPERTY_ID=...
+ARDUINO_TEMPERATURE_PROPERTY_ID=...
 ARDUINO_TOKEN_URL=https://api2.arduino.cc/iot/v1/clients/token
 ARDUINO_CLIENT_ID=...
 ARDUINO_CLIENT_SECRET=...
@@ -51,7 +52,7 @@ OPENAI_API_KEY=...
 
 - `app/page.tsx` – Main dashboard (client component).
 - `components/chat-panel.tsx` – Chat experience.
-- `app/api/hygrosense/overview` – Fetch Arduino humidity + OpenAI narrative.
+- `app/api/hygrosense/overview` - Fetch Arduino humidity/temperature + OpenAI narrative.
 - `app/api/hygrosense/chat` – Chat responses via OpenAI.
 - `lib/arduino.ts` – OAuth helper for Arduino Cloud tokens.
 - `lib/openai.ts` – OpenAI client setup.
