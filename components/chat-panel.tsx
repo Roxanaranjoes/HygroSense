@@ -116,17 +116,17 @@ export default function ChatPanel() {
   );
 
   return (
-    <section className="flex flex-col rounded-[28px] border border-emerald-100 bg-gradient-to-br from-white via-emerald-50 to-sky-50 p-6 text-emerald-900 shadow-[0_12px_45px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_70px_rgba(15,23,42,0.18)]">
+    <section className="flex flex-col rounded-[28px] border border-emerald-100 bg-gradient-to-br from-white via-emerald-50 to-sky-50 p-5 text-emerald-900 shadow-[0_12px_45px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_70px_rgba(15,23,42,0.18)] sm:p-6">
       <div className="flex flex-col gap-2">
         <p className="text-xs tracking-[0.35em] text-emerald-500">Guia personal</p>
-        <h2 className="text-3xl font-semibold text-emerald-900">Charla con HygroSense</h2>
+        <h2 className="text-2xl font-semibold text-emerald-900 sm:text-3xl">Charla con HygroSense</h2>
         <p className="text-sm text-emerald-700">
           Elige una pregunta o escribe la tuya; respondere en tono cercano, sin
           tecnicismos ni rodeos.
         </p>
       </div>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
         {PRESET_QUESTIONS.map((preset) => (
           <button
             key={preset.label}
@@ -142,8 +142,8 @@ export default function ChatPanel() {
         ))}
       </div>
 
-      <div className="mt-6 flex-1 rounded-[24px] border border-emerald-100 bg-gradient-to-br from-white via-emerald-50 to-lime-50 p-5">
-        <div className="flex h-72 flex-col gap-4 overflow-y-auto pr-2 text-emerald-900">
+      <div className="mt-5 flex-1 rounded-[24px] border border-emerald-100 bg-gradient-to-br from-white via-emerald-50 to-lime-50 p-5">
+        <div className="flex min-h-[220px] flex-col gap-4 overflow-y-auto pr-2 text-emerald-900 sm:h-72">
           {chatMessages.map((message) => {
             const blocks = formatMessageBlocks(message.content);
             const isUser = message.role === "user";

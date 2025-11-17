@@ -191,42 +191,44 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#fffbf5,_#defbea_40%,_#daf1ff_70%)] text-slate-900">
-      <div className="pointer-events-none absolute inset-0 opacity-80">
-        <div className="absolute inset-x-0 top-0 mx-auto h-72 w-72 rounded-full bg-pink-200 blur-[150px] mix-blend-screen" />
-        <div className="absolute left-6 top-1/3 h-80 w-80 rounded-full bg-emerald-200 blur-[200px] mix-blend-screen" />
-        <div className="absolute right-12 top-1/2 h-80 w-80 rounded-full bg-sky-200 blur-[220px] mix-blend-screen" />
-        <div className="absolute left-1/4 bottom-0 h-64 w-64 rounded-full bg-amber-200 blur-[190px] mix-blend-screen" />
+      <div className="pointer-events-none absolute inset-0 opacity-60">
+        <div className="hidden lg:block">
+          <div className="absolute inset-x-0 top-0 mx-auto h-72 w-72 rounded-full bg-pink-200 blur-[150px] mix-blend-screen" />
+          <div className="absolute left-6 top-1/3 h-80 w-80 rounded-full bg-emerald-200 blur-[200px] mix-blend-screen" />
+          <div className="absolute right-12 top-1/2 h-80 w-80 rounded-full bg-sky-200 blur-[220px] mix-blend-screen" />
+          <div className="absolute left-1/4 bottom-0 h-64 w-64 rounded-full bg-amber-200 blur-[190px] mix-blend-screen" />
+        </div>
       </div>
-      <main className="relative mx-auto flex min-h-screen max-w-5xl flex-col gap-10 px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <section className="rounded-[32px] bg-white/95 p-6 shadow-[0_20px_60px_rgba(18,28,45,0.12)] backdrop-blur">
-          <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+      <main className="relative mx-auto flex min-h-screen w-full max-w-[90rem] flex-col gap-8 px-4 py-8 sm:px-6 lg:px-10 lg:py-16">
+        <section className="rounded-[28px] bg-white/95 p-5 shadow-[0_20px_60px_rgba(18,28,45,0.12)] backdrop-blur md:p-6">
+          <header className="flex flex-col gap-6 lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:items-stretch lg:gap-10">
             <div className="flex flex-col gap-6">
               <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-[18px] border border-pink-100 bg-gradient-to-br from-white to-pink-50 text-2xl font-semibold text-pink-600 shadow-inner">
+                <div className="flex h-14 w-14 items-center justify-center rounded-[18px] border border-pink-100 bg-gradient-to-br from-white to-pink-50 text-xl font-semibold text-pink-600 shadow-inner sm:h-16 sm:w-16 sm:text-2xl">
                   HS
                 </div>
                 <div>
-                  <p className="text-xs tracking-[0.35em] text-pink-500">
+                  <p className="text-[0.65rem] tracking-[0.35em] text-pink-500 sm:text-xs">
                     HygroSense
                   </p>
-                  <h1 className="text-4xl font-semibold text-emerald-900">
+                  <h1 className="text-3xl font-semibold text-emerald-900 sm:text-4xl">
                     Ritmo del ambiente
                   </h1>
                 </div>
               </div>
-              <p className="max-w-2xl text-lg text-emerald-800">
+              <p className="max-w-2xl text-base text-emerald-800 sm:text-lg">
                 HygroSense traduce la humedad en palabras simples y señales cercanas.
                 Sin tecnicismos, solo lo que necesitas para cuidar tu hogar.
               </p>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-emerald-700">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 shadow-sm shadow-emerald-200/70">
+              <div className="flex flex-wrap items-center gap-3 text-xs text-emerald-700 sm:text-sm">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5 shadow-sm shadow-emerald-200/70">
                   <span className="relative flex h-2.5 w-2.5">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex h-full w-full rounded-full bg-emerald-500" />
                   </span>
                   Lectura en vivo
                 </div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 shadow-sm shadow-amber-200/70">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5 shadow-sm shadow-amber-200/70">
                   <span className="text-xs font-semibold text-amber-500">10s</span>
                   Actualizacion constante
                 </div>
@@ -250,12 +252,29 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
+            <div className="hidden rounded-[24px] border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-6 text-emerald-900 shadow-lg shadow-emerald-100/70 lg:flex lg:flex-col lg:justify-between">
+              <div>
+                <p className="text-xs tracking-[0.4em] text-emerald-500">Panorama</p>
+                <p className="mt-2 text-4xl font-semibold">{humidityDisplay}</p>
+                <p className="mt-1 text-sm text-emerald-600">{environmentReading.label}</p>
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between text-xs text-emerald-500">
+                  <span>Lecturas activas</span>
+                  <span>10 s</span>
+                </div>
+                <div className="h-2.5 w-full rounded-full bg-emerald-100">
+                  <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400" style={{ width: `${humidityProgress}%` }} />
+                </div>
+                <p className="text-xs text-emerald-700">{environmentReading.tagline}</p>
+              </div>
+            </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:col-span-2">
               <button
                 onClick={fetchOverview}
                 disabled={loading}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-200/70 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl active:scale-95 disabled:opacity-60 disabled:hover:translate-y-0"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-200/70 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl active:scale-95 disabled:opacity-60 disabled:hover:translate-y-0 sm:px-6"
               >
                 {loading && (
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -265,7 +284,7 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={scrollToChat}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-pink-200 bg-white/80 px-6 py-3 text-sm font-semibold text-pink-500 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-pink-50 hover:text-pink-600"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-pink-200 bg-white/80 px-5 py-3 text-sm font-semibold text-pink-500 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-pink-50 hover:text-pink-600 sm:px-6"
               >
                 <span className="h-2 w-2 rounded-full bg-pink-400" />
                 Ir a la charla IA
@@ -285,13 +304,13 @@ export default function HomePage() {
             </p>
           )}
 
-          <div className="mt-10 grid grid-cols-1 gap-8 xl:grid-cols-[1.1fr_0.9fr]">
-            <section className="space-y-8 rounded-[28px] border border-emerald-100 bg-white/85 p-6 shadow-inner shadow-emerald-100">
+          <div className="mt-10 grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_0.8fr] 2xl:grid-cols-[1.3fr_0.7fr]">
+            <section className="space-y-8 rounded-[28px] border border-emerald-100 bg-white/85 p-5 shadow-inner shadow-emerald-100 sm:p-6">
               <div className="flex flex-col gap-8 lg:flex-row">
                 <div className="flex flex-1 flex-col items-center gap-6">
                   <div className="relative transition-transform duration-500 hover:scale-105">
                     <div className="absolute inset-4 rounded-full bg-gradient-to-r from-emerald-50 to-lime-100 blur-2xl" />
-                    <div className="relative h-48 w-48 rounded-full border border-emerald-100 bg-white p-1">
+                    <div className="relative h-40 w-40 rounded-full border border-emerald-100 bg-white p-1 sm:h-48 sm:w-48">
                       <div className="flex h-full w-full flex-col items-center justify-center rounded-full border border-emerald-50 bg-gradient-to-b from-white to-emerald-50/40 text-center">
                         <span className="text-xs tracking-[0.3em] text-emerald-500">
                           Humedad
@@ -362,7 +381,7 @@ export default function HomePage() {
               </div>
 
               <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-                <div className="rounded-[26px] border border-emerald-100 bg-white p-6 shadow-sm">
+                <div className="rounded-[26px] border border-emerald-100 bg-white p-5 shadow-sm sm:p-6">
                   <p className="text-sm tracking-[0.3em] text-emerald-500">
                     Relato del ambiente
                   </p>
@@ -402,7 +421,7 @@ export default function HomePage() {
               </div>
             </section>
 
-            <div ref={chatRef}>
+            <div ref={chatRef} className="h-full">
               <ChatPanel />
             </div>
           </div>
