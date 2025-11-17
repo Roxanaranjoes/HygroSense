@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import openai from "@/lib/openai";
 
-function extractText(response: Awaited<ReturnType<typeof openai.responses.create>>) {
+type HistoryMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+function extractText(
+  response: Awaited<ReturnType<typeof openai.responses.create>>
+) {
   if (!("output" in response)) {
     throw new Error("Unexpected streaming response");
   }
@@ -16,7 +23,8 @@ function extractText(response: Awaited<ReturnType<typeof openai.responses.create
 
 export async function POST(request: Request) {
   try {
-    const { question } = await request.json();
+    const { question, history = [] }: { question?: string; history?: HistoryMessage[] } =
+      await request.json();
 
     if (!question || typeof question !== "string") {
       return NextResponse.json(
@@ -24,6 +32,17 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    const safeHistory = Array.isArray(history)
+      ? history
+          .filter(
+            (msg): msg is HistoryMessage =>
+              msg &&
+              (msg.role === "user" || msg.role === "assistant") &&
+              typeof msg.content === "string"
+          )
+          .slice(-6)
+      : [];
 
     const response = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -33,6 +52,10 @@ export async function POST(request: Request) {
           content:
             "Eres la guia personal de HygroSense. Respondes en espanol sencillo, tono humano y sereno. No menciones que eres un modelo o IA; ofrece consejos cotidianos sobre humedad y bienestar.",
         },
+        ...safeHistory.map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        })),
         {
           role: "user",
           content: question,

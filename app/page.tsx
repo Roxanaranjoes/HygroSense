@@ -223,7 +223,6 @@ export default function HomePage() {
     ],
     [
       environmentReading.tagline,
-      environmentReading.description,
       temperatureReading.description,
       humidityDisplay,
       temperatureDisplay,

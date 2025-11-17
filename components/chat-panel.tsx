@@ -82,7 +82,10 @@ export default function ChatPanel() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ question: trimmed }),
+        body: JSON.stringify({
+          question: trimmed,
+          history: chatMessages.map(({ role, content }) => ({ role, content })),
+        }),
       });
 
       const json = await response.json();
@@ -105,7 +108,7 @@ export default function ChatPanel() {
     } finally {
       setChatLoading(false);
     }
-  }, []);
+  }, [chatMessages]);
 
   const handleCustomQuestion = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
